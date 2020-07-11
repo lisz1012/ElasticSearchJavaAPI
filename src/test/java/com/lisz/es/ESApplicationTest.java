@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -61,11 +62,13 @@ public class ESApplicationTest {
     public void esCRUD() {
         //create(client);
         //get(client);
-        getAll(client);
+        //getAll(client);
+        update(client);
     }
 
     @SneakyThrows
     private void getAll(TransportClient client) {
+        // SearchResponse就是 GET /product2/_search 所拿到的完整的东西，想要什么去get...
         SearchResponse response = client.prepareSearch("product2").get();
         SearchHit hits[] = response.getHits().getHits();
         // 直接打印hits[]，跟Kibana上的hits[]查询结果一样, 数组类型
@@ -109,5 +112,19 @@ public class ESApplicationTest {
         System.out.println("type: " + type);
         System.out.println("id: " + id);
         System.out.println("source: " + source);
+    }
+
+    @SneakyThrows
+    public void update(TransportClient client) {
+        // 只更改指定的field，其余的保持不变
+        UpdateResponse response = client.prepareUpdate("product2", "_doc", "5")
+                                      .setDoc(XContentFactory.jsonBuilder()
+                                          .startObject()
+                                              .field("name", "hongmi erji") // updated name
+                                          .endObject()
+                                      )
+                                  .get();
+        System.out.println("Rest status: " + response.status());
+        System.out.println(response.getGetResult());
     }
 }
