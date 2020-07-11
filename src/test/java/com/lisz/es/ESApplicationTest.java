@@ -3,6 +3,7 @@ package com.lisz.es;
 import com.lisz.es.entity.Product;
 import com.lisz.es.service.ProductService;
 import lombok.SneakyThrows;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -11,6 +12,8 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.profile.ProfileShardResult;
@@ -63,7 +66,9 @@ public class ESApplicationTest {
         //create(client);
         //get(client);
         //getAll(client);
-        update(client);
+        //update(client);
+        //delete(client);
+        multiSearch(client);
     }
 
     @SneakyThrows
@@ -125,6 +130,27 @@ public class ESApplicationTest {
                                       )
                                   .get();
         System.out.println("Rest status: " + response.status());
-        System.out.println(response.getGetResult());
+        System.out.println(response.getResult());
+    }
+
+    @SneakyThrows
+    private void delete(TransportClient client) {
+        DeleteResponse response = client.prepareDelete("product2", "_doc", "1").get();
+        System.out.println(response.getResult());
+    }
+
+    @SneakyThrows
+    private void multiSearch(TransportClient client) {
+        SearchResponse response = client.prepareSearch("product2")
+                .setTypes("_doc") //可以删掉
+                .setQuery(QueryBuilders.termQuery("name", "xiaomi"))
+                .setPostFilter(QueryBuilders.rangeQuery("price").from(0).to(4000))
+                .setFrom(0).setSize(2)
+                .get();
+        SearchHit hits[] = response.getHits().getHits();
+        Arrays.stream(hits).forEach(System.out::println);
+        Arrays.stream(hits).forEach(h->{
+            System.out.println(h.getSourceAsString());
+        });
     }
 }
