@@ -1,0 +1,50 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    username: root
+    password: ^abc123$
+    url: jdbc:mysql://localhost:3306/ssm?characterEncoding=utf8&useSSL=false&serverTimezone=GMT-7&allowPublicKeyRetrieval=true&allowMultiQueries=true
+#mybatis:
+#  type-aliases-package: com.lisz.es.entity
+#  mapper-locations:
+#    - classpath:mybatis/mapper/*.xml
+mybatis-plus:
+  # xml
+  mapper-locations: classpath:mapper/*.xml,classpath:mapper/*.xml
+  # 实体扫描，多个package用逗号或者分号分隔
+  type-aliases-package: com.lisz.es.entity
+  global-config:
+    #刷新mapper 调试神器
+    db-config:
+      #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+      id-type: AUTO
+      #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+      field-strategy: NOT_EMPTY
+      #驼峰下划线转换
+      #column-underline: true
+      #数据库大写下划线转换
+      #capital-mode: true
+      #逻辑删除配置
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      db-type: mysql
+    refresh: true
+    #自定义填充策略接口实现
+    #meta-object-handler: com.baomidou.springboot.xxx
+    #自定义SQL注入器
+    #sql-injector: com.baomidou.springboot.xxx
+  configuration:
+    #关闭驼峰到下划线的映射
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+fdfs:
+  connect-timeout: 600
+  tracker-list:
+    - 192.168.1.120:22122
+  so-timeout: 1500
+  thumb-image:             #缩略图生成参数
+    width: 150
+    height: 150
