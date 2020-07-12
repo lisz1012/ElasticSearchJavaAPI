@@ -27,6 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -64,17 +65,18 @@ public class ESApplicationTest {
     @SneakyThrows
     public void esCRUD() {
         //create(client);
-        //get(client);
+        get(client);
         //getAll(client);
         //update(client);
         //delete(client);
-        multiSearch(client);
+        //multiSearch(client);
+        //updatePrice(2, 4999);
     }
 
     @SneakyThrows
     private void getAll(TransportClient client) {
         // SearchResponse就是 GET /product2/_search 所拿到的完整的东西，想要什么去get...
-        SearchResponse response = client.prepareSearch("product2").get();
+        SearchResponse response = client.prepareSearch("product2").get(); //可以设置为"product*"
         SearchHit hits[] = response.getHits().getHits();
         // 直接打印hits[]，跟Kibana上的hits[]查询结果一样, 数组类型
         Arrays.stream(hits).forEach(System.out::println);
@@ -117,10 +119,11 @@ public class ESApplicationTest {
         System.out.println("type: " + type);
         System.out.println("id: " + id);
         System.out.println("source: " + source);
+        System.out.println(response.getSourceAsString());
     }
 
     @SneakyThrows
-    public void update(TransportClient client) {
+    private void update(TransportClient client) {
         // 只更改指定的field，其余的保持不变
         UpdateResponse response = client.prepareUpdate("product2", "_doc", "5")
                                       .setDoc(XContentFactory.jsonBuilder()
@@ -133,6 +136,22 @@ public class ESApplicationTest {
         System.out.println(response.getResult());
     }
 
+    public void updatePrice(Integer id, double price) {
+        UpdateResponse response = null;
+        try {
+            response = client.prepareUpdate("product2", "_doc", id.toString())
+                    .setDoc(XContentFactory.jsonBuilder()
+                    .startObject()
+                        .field("price", price)
+                    .endObject())
+                .get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(response.status());
+        System.out.println(response.getGetResult()); // null
+    }
+
     @SneakyThrows
     private void delete(TransportClient client) {
         DeleteResponse response = client.prepareDelete("product2", "_doc", "1").get();
@@ -141,11 +160,12 @@ public class ESApplicationTest {
 
     @SneakyThrows
     private void multiSearch(TransportClient client) {
+        // 查询所有name中包含“小米”，且价格小于等于4000的
         SearchResponse response = client.prepareSearch("product2")
                 .setTypes("_doc") //可以删掉
                 .setQuery(QueryBuilders.termQuery("name", "xiaomi"))
                 .setPostFilter(QueryBuilders.rangeQuery("price").from(0).to(4000))
-                .setFrom(0).setSize(2)
+                .setFrom(0).setSize(2) //从第几条（而不是第几页）开始显示，总共显示几条数据
                 .get();
         SearchHit hits[] = response.getHits().getHits();
         Arrays.stream(hits).forEach(System.out::println);
