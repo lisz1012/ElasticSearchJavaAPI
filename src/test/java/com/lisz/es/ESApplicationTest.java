@@ -16,6 +16,12 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.metrics.Avg;
 import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.After;
@@ -31,6 +37,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +72,13 @@ public class ESApplicationTest {
     @SneakyThrows
     public void esCRUD() {
         //create(client);
-        get(client);
+        //get(client);
         //getAll(client);
         //update(client);
         //delete(client);
         //multiSearch(client);
         //updatePrice(2, 4999);
+        aggsSearch(client);
     }
 
     @SneakyThrows
@@ -164,7 +172,7 @@ public class ESApplicationTest {
         SearchResponse response = client.prepareSearch("product2")
                 .setTypes("_doc") //可以删掉
                 .setQuery(QueryBuilders.termQuery("name", "xiaomi"))
-                .setPostFilter(QueryBuilders.rangeQuery("price").from(0).to(4000))
+                .setPostFilter(QueryBuilders.rangeQuery("price").from(0).to(4000)) // 链式编程
                 .setFrom(0).setSize(2) //从第几条（而不是第几页）开始显示，总共显示几条数据
                 .get();
         SearchHit hits[] = response.getHits().getHits();
@@ -172,5 +180,47 @@ public class ESApplicationTest {
         Arrays.stream(hits).forEach(h->{
             System.out.println(h.getSourceAsString());
         });
+    }
+
+    @SneakyThrows
+    private void aggsSearch(TransportClient client) {
+        // 除了subAggregation都是自己摸索出来的，高兴
+        SearchResponse response = client.prepareSearch("product2")
+                .addAggregation(
+                        AggregationBuilders.dateHistogram("group_by_month")
+                            .field("date")
+                            .calendarInterval(DateHistogramInterval.MONTH)
+                        .subAggregation(
+                            AggregationBuilders
+                                .terms("by_tag")
+                                .field("tags.keyword")
+                            .subAggregation(
+                                AggregationBuilders
+                                    .avg("avg_price")
+                                    .field("price")
+                            )
+                        )
+                )
+                .setSize(0)
+            .execute().actionGet();
+
+        Map<String, Aggregation> map = response.getAggregations().asMap();
+        Aggregation groupByMonth = map.get("group_by_month");
+        Histogram dates = (Histogram)groupByMonth;
+        Iterator<Histogram.Bucket> buckets = (Iterator<Histogram.Bucket>)dates.getBuckets().iterator();
+        while (buckets.hasNext()) {
+            Histogram.Bucket dateBucket = buckets.next();
+            System.out.println("\n\n月份: " + dateBucket.getKeyAsString() + "\n计数： " + dateBucket.getDocCount());
+            Aggregation groupByTag = dateBucket.getAggregations().asMap().get("by_tag");
+            StringTerms terms = (StringTerms) groupByTag;
+            Iterator<StringTerms.Bucket> tagsBucket = terms.getBuckets().iterator();
+            while (tagsBucket.hasNext()) {
+                StringTerms.Bucket tagBucket = tagsBucket.next();
+                System.out.println("\t标签名称: " + tagBucket.getKey() + "\n\t数量: " + tagBucket.getDocCount());
+                Aggregation avgPrice = tagBucket.getAggregations().asMap().get("avg_price");
+                Avg avg = (Avg)avgPrice;
+                System.out.println("\t平均价格: " + avg.getValue() + "\n");
+            }
+        }
     }
 }
