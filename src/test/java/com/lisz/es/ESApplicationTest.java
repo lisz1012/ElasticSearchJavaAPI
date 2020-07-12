@@ -58,8 +58,8 @@ public class ESApplicationTest {
                 .put("cluster.name", "my-es")
                 .build();
         client = new PreBuiltTransportClient(settings)
-                .addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.1.3"), 9300))  // 节点之间的通讯IP
-                .addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.1.3"), 9301)); // 节点之间的通讯IP
+                .addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.1.3"), 9300))  // 节点之间的通讯端口
+                .addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.1.3"), 9301)); // 节点之间的通讯端口
     }
 
     @After
@@ -78,11 +78,12 @@ public class ESApplicationTest {
         //delete(client);
         //multiSearch(client);
         //updatePrice(2, 4999);
-        aggsSearch(client);
+        //aggsSearch(client);
     }
 
     @SneakyThrows
-    private void getAll(TransportClient client) {
+    @Test
+    public void getAll() {
         // SearchResponse就是 GET /product2/_search 所拿到的完整的东西，想要什么去get...
         SearchResponse response = client.prepareSearch("product2").get(); //可以设置为"product*"
         SearchHit hits[] = response.getHits().getHits();
@@ -97,7 +98,7 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
-    private void create(TransportClient client) {
+    public void create(TransportClient client) {
         List<Product> list = service.list();
         for (Product product : list) {
             System.out.println(product.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -117,7 +118,8 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
-    private void get(TransportClient client) {
+    @Test
+    public void get() {
         GetResponse response = client.prepareGet("product2", "_doc", "1").get();
         String index = response.getIndex();
         String type = response.getType();
@@ -131,7 +133,7 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
-    private void update(TransportClient client) {
+    public void update() {
         // 只更改指定的field，其余的保持不变
         UpdateResponse response = client.prepareUpdate("product2", "_doc", "5")
                                       .setDoc(XContentFactory.jsonBuilder()
@@ -161,13 +163,13 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
-    private void delete(TransportClient client) {
+    public void delete() {
         DeleteResponse response = client.prepareDelete("product2", "_doc", "1").get();
         System.out.println(response.getResult());
     }
 
     @SneakyThrows
-    private void multiSearch(TransportClient client) {
+    public void multiSearch() {
         // 查询所有name中包含“小米”，且价格小于等于4000的
         SearchResponse response = client.prepareSearch("product2")
                 .setTypes("_doc") //可以删掉
@@ -183,7 +185,7 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
-    private void aggsSearch(TransportClient client) {
+    public void aggsSearch() {
         // 除了subAggregation都是自己摸索出来的，高兴
         SearchResponse response = client.prepareSearch("product2")
                 .addAggregation(
@@ -204,6 +206,7 @@ public class ESApplicationTest {
                 .setSize(0)
             .execute().actionGet();
 
+        // 拿Aggregation、转Map -> 取值 -> 强转 -> 拿buckets、遍历 -> 拿bucket的Aggregation、转Map ...
         Map<String, Aggregation> map = response.getAggregations().asMap();
         Aggregation groupByMonth = map.get("group_by_month");
         Histogram dates = (Histogram)groupByMonth;
