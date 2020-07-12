@@ -185,6 +185,7 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
+    @Test
     public void aggsSearch() {
         // 除了subAggregation都是自己摸索出来的，高兴
         SearchResponse response = client.prepareSearch("product2")
@@ -195,11 +196,11 @@ public class ESApplicationTest {
                         .subAggregation(
                             AggregationBuilders
                                 .terms("by_tag")
-                                .field("tags.keyword")
+                                    .field("tags.keyword") // 聚合查询需要正排索引需要keyword
                             .subAggregation(
                                 AggregationBuilders
                                     .avg("avg_price")
-                                    .field("price")
+                                        .field("price")
                             )
                         )
                 )
