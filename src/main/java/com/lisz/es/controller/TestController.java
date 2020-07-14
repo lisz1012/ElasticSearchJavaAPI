@@ -1,5 +1,6 @@
 package com.lisz.es.controller;
 
+import com.lisz.es.service.MetricsSearvice;
 import com.lisz.test.Calculator;
 import com.lisz.test.KPI;
 import com.lisz.test.TotalValueCalculator;
@@ -18,36 +19,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/test")
-public class TestController implements InitializingBean {
-
-	private List<Calculator> calculators = new ArrayList<>();
+public class TestController {
 
 	@Autowired
-	@Qualifier("total_values")
-	private Calculator totalValueCalculator;
-	@Autowired
-	@Qualifier("normalized_values")
-	private Calculator normalizedValueCalculator;
-	@Autowired
-	@Qualifier("unfilled_values")
-	private Calculator unfilledValueCalculator;
-
-
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		calculators.add(totalValueCalculator);
-		calculators.add(normalizedValueCalculator);
-		calculators.add(unfilledValueCalculator);
-	}
+	private MetricsSearvice service;
 
 	@GetMapping("/metrics")
 	public String test() {
-		Map<String, Map<KPI, Long>> res = new HashMap<>();
-		ValueRecord record = new ValueRecord(10L, 6L);
-		calculators.forEach(c -> {
-			c.calculate(res, record);
-		});
-		System.out.println(res);
+		service.test();
 		return "OK";
 	}
 }
