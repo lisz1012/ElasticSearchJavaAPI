@@ -77,7 +77,7 @@ public class ESApplicationTest {
         //update(client);
         //delete(client);
         //multiSearch(client);
-        //updatePrice(2, 4999);
+        updatePrice(5, 299);
         //aggsSearch(client);
     }
 
@@ -133,6 +133,7 @@ public class ESApplicationTest {
     }
 
     @SneakyThrows
+    @Test
     public void update() {
         // 只更改指定的field，其余的保持不变
         UpdateResponse response = client.prepareUpdate("product2", "_doc", "5")

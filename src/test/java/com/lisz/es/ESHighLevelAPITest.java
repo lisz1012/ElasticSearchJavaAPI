@@ -105,6 +105,7 @@ public class ESHighLevelAPITest {
 
 	@Test
 	@SneakyThrows
+	// 搜索符合条件的index
 	public void getIndex() {
 		GetIndexRequest request = new GetIndexRequest("product*");
 		GetIndexResponse response = client.indices().get(request, RequestOptions.DEFAULT);
@@ -114,6 +115,7 @@ public class ESHighLevelAPITest {
 
 	@Test
 	@SneakyThrows
+	// for循环，每次插入单条数据
 	public void insert() {
 		List<Product> list = service.list();
 		IndexRequest request = new IndexRequest("test_index");
