@@ -5,10 +5,24 @@ spring:
     username: root
     password: ^abc123$
     url: jdbc:mysql://localhost:3306/ssm?characterEncoding=utf8&useSSL=false&serverTimezone=GMT-7&allowPublicKeyRetrieval=true&allowMultiQueries=true
+
+
+# key的字符串分别注入各个Calculator子类中，与@Value呼应
 metrics:
   total_values: total_values
   normalized_values: normalized_values
   unfilled_values: unfilled_values
+# 将Calculator子类对象放入MetricsSearvice中的calculators 这个List中，
+# 与MetricsSearvice上面的@ConfigurationProperties(prefix = "props")和calculators上面的@Autowired呼应
+# - ${xxx_xxxx} 里面的内容与Calculator子类对象中的@Component("xxx_xxxx")相呼应
+# 实际上 calculators: 下面什么都不写也没关系，Springboot会自动扫描所有的Calculator的子类，将他们按照类名字典排序之后放入calculator这个List
+props:
+  calculators:
+    - ${total_values}
+    - ${normalized_values}
+    - ${unfilled_values}
+
+
 #mybatis:
 #  type-aliases-package: com.lisz.es.entity
 #  mapper-locations:
