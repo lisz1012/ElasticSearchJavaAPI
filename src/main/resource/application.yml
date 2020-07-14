@@ -5,6 +5,10 @@ spring:
     username: root
     password: ^abc123$
     url: jdbc:mysql://localhost:3306/ssm?characterEncoding=utf8&useSSL=false&serverTimezone=GMT-7&allowPublicKeyRetrieval=true&allowMultiQueries=true
+metrics:
+  total_values: total_values
+  normalized_values: normalized_values
+  unfilled_values: unfilled_values
 #mybatis:
 #  type-aliases-package: com.lisz.es.entity
 #  mapper-locations:

@@ -1,7 +1,5 @@
 package com.lisz.test;
 
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +10,10 @@ import java.util.Map;
 只要多写一句calculators.add(new XXXCalculator())就好了
  */
 public class Test1 {
-	@Test
+
+	public static void main(String[] args) {
+
+	}
 	public void test() {
 		List<Calculator> calculators = new ArrayList<>();
 		calculators.add(new TotalValueCalculator());
